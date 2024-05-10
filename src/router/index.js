@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from "vue-router";
-import { getAuth, onAuthStateChanged} from "firebase/auth";
+import { getAuth, onAuthStateChanged } from "firebase/auth";
 
 const router = createRouter({
   history: createWebHistory(),
@@ -11,9 +11,8 @@ const router = createRouter({
         requireAuth: true,
       },
     },
-    { path: "/sing-in", component: () => import("../views/SingIn.vue") },
-    { path: "/register", component: () => import("../views/Register.vue") },
-
+    { path: "/sing-in", component: () => import("../views/SingIn.vue"), meta: { guestOnly: true } },
+    { path: "/register", component: () => import("../views/Register.vue"), meta: { guestOnly: true } },
   ],
 });
 
@@ -31,26 +30,22 @@ const getCurrentUser = () => {
 };
 
 router.beforeEach(async (to, from, next) => {
-  console.log("Checking authentication for route:", to.path);
-  if (to.matched.some((record) => record.meta.requireAuth)) {
-    console.log("Route requires authentication");
-    try {
-      const user = await getCurrentUser();
-      console.log("User from getCurrentUser:", user);
-      if (user) {
-        next();
-      } else {
-        console.log("No user found, redirecting to /sing-in");
-        next("/sing-in");
-      }
-    } catch (error) {
-      console.log("Error in authentication:", error);
+  const user = await getCurrentUser();
+  if (to.matched.some(record => record.meta.requireAuth)) {
+    if (!user) {
       next("/sing-in");
+    } else {
+      next();
+    }
+  } else if (to.matched.some(record => record.meta.guestOnly)) {
+    if (user) {
+      next("/"); // Redirige a la página principal si el usuario ya está autenticado
+    } else {
+      next();
     }
   } else {
-    next();
+    next(); // asegura que siempre se llame a next()!
   }
 });
-
 
 export default router;
