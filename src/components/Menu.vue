@@ -14,8 +14,6 @@ const handleSignOut = () => {
       signOut(auth).then(() => {
         router.push("/sing-in");
       });
-    } else {
-      alert("Como te vas a desloguear si no estas logueado weba");
     }
   });
 };

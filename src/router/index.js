@@ -13,6 +13,7 @@ const router = createRouter({
     },
     { path: "/sing-in", component: () => import("../views/SingIn.vue") },
     { path: "/register", component: () => import("../views/Register.vue") },
+
   ],
 });
 
@@ -29,13 +30,21 @@ const getCurrentUser = () => {
   });
 };
 
-
 router.beforeEach(async (to, from, next) => {
+  console.log("Checking authentication for route:", to.path);
   if (to.matched.some((record) => record.meta.requireAuth)) {
-    if (await getCurrentUser) {
-      next();
-    } else {
-      console.log("you dont have access!");
+    console.log("Route requires authentication");
+    try {
+      const user = await getCurrentUser();
+      console.log("User from getCurrentUser:", user);
+      if (user) {
+        next();
+      } else {
+        console.log("No user found, redirecting to /sing-in");
+        next("/sing-in");
+      }
+    } catch (error) {
+      console.log("Error in authentication:", error);
       next("/sing-in");
     }
   } else {

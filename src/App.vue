@@ -8,7 +8,8 @@
 #app {
     display: grid;
     grid-template-areas:
-      "aside main main";
+
+    "aside main";
     grid-template-columns: 450px 1fr;
     grid-template-rows: 1fr auto;
   }
