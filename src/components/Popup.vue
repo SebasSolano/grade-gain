@@ -21,7 +21,6 @@
 
 <script setup>
 import { ref, watch } from 'vue';
-import { defineProps } from 'vue';
 import { useRouter } from "vue-router";
 
   const props = defineProps({

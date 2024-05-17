@@ -1,20 +1,22 @@
 <script setup>
-  import { defineEmits } from "vue";
   import { ref } from "vue";
-  import {
-    getAuth,
-    signInWithEmailAndPassword,
-    fetchSignInMethodsForEmail,
-  } from "firebase/auth";
+  import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+
 
   const email = ref("");
   const password = ref("");
   const errMsg = ref();
+  const validateReset = ref(false);
+  const emits = defineEmits(["login", "reset"]);
 
-  const emits = defineEmits(["login"]);
+  const resetPass = () => {
+    validateReset.value = true;
+    console.log(validateReset.value)
+    emits("reset", validateReset.value);
+  };
 
   const login = () => {
-    errMsg.value = ""
+    errMsg.value = "";
     const auth = getAuth();
 
     if (email.value != "" || password.value != "") {
@@ -149,8 +151,8 @@
         >
       </div>
       <div class="flex items-center justify-center mb-4">
-        <router-link to="#" class="text-sm hover:underline"
-          >Did you forget your password?</router-link
+        <a @click="resetPass" class="text-sm hover:underline"
+          >Did you forget your password?</a
         >
       </div>
       <div class="text-center">

@@ -11,6 +11,10 @@ const router = createRouter({
         requireAuth: true,
       },
     },
+      {
+        path: "/validate-user",
+        component: () => import("../views/ValidateUser.vue"),
+      },
     { path: "/sing-in", component: () => import("../views/SingIn.vue"), meta: { guestOnly: true } },
     { path: "/register", component: () => import("../views/Register.vue"), meta: { guestOnly: true } },
   ],
@@ -34,17 +38,19 @@ router.beforeEach(async (to, from, next) => {
   if (to.matched.some(record => record.meta.requireAuth)) {
     if (!user) {
       next("/sing-in");
+    } else if (!user.emailVerified) {
+      next("/validate-user"); // Redirige a una página para verificar el correo electrónico
     } else {
       next();
     }
   } else if (to.matched.some(record => record.meta.guestOnly)) {
     if (user) {
-      next("/"); // Redirige a la página principal si el usuario ya está autenticado
+      next("/"); 
     } else {
       next();
     }
   } else {
-    next(); // asegura que siempre se llame a next()!
+    next(); 
   }
 });
 

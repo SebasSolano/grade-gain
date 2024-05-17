@@ -1,5 +1,5 @@
 <script setup>
-import Menu from "../components/Menu.vue";
+  import Menu from "../components/Menu.vue";
 </script>
 <template>
   <div id="app" class="relative h-screen p-2 gap-2">

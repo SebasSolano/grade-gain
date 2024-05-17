@@ -1,10 +1,10 @@
 <script setup>
-import { defineEmits } from "vue";
 import {
   getAuth,
   createUserWithEmailAndPassword,
   sendEmailVerification,
-  signOut, // Importa signOut
+  signOut, 
+  updateProfile// Importa signOut
 } from "firebase/auth";
 import { ref } from "vue";
 
@@ -18,7 +18,6 @@ const msgError = ref("");
 
 const emits = defineEmits(["register"]);
 const auth = getAuth();
-
 const register = () => {
   msgError.value = "";
   if (isChecked.value) {
@@ -35,14 +34,18 @@ const register = () => {
             sendEmailVerification(auth.currentUser)
               .then(() => {
                 console.log("Email verification sent!");
-                // Desloguear al usuario después de enviar la verificación
-                signOut(auth).then(() => {
-                  console.log("User signed out after registration.");
-                  emits("register", {
-                    message: "Successful registration! Please verify your email.",
-                    success: true,
-                    showPopup: true,
-                    linkRoute: "/sing-in"
+                updateProfile(auth.currentUser, {
+                  displayName: `${name.value} ${surname.value}`, photoURL: "https://upload.wikimedia.org/wikipedia/commons/2/2c/Default_pfp.svg"
+                }).then(() => {
+                  console.log("Display name updated successfully!");
+                  signOut(auth).then(() => {
+                    console.log("User signed out after registration.");
+                    emits("register", {
+                      message: "Successful registration! Please verify your email.",
+                      success: true,
+                      showPopup: true,
+                      linkRoute: "/sing-in"
+                    });
                   });
                 });
               })
