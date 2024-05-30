@@ -7,13 +7,13 @@
 
   const currentUser = ref(null);
 
-
   onMounted(() => {
     const auth = getAuth();
     onAuthStateChanged(auth, (user) => {
       currentUser.value = user;
-
-      if(user.emailVerified) router.push("/");
+      console.log(currentUser.value)
+      console.log(currentUser.value.reloadUserInfo.emailVerified)
+      if(currentUser.value.reloadUserInfo.emailVerified) router.push("/");
     });
   });
 </script>

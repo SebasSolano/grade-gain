@@ -1,51 +1,55 @@
 <script setup>
-  import {
-    getAuth,
-    sendEmailVerification,
-    onAuthStateChanged,
-  } from "firebase/auth";
-  import { useRouter } from "vue-router";
-  import { ref } from "vue";
+import {
+  getAuth,
+  sendEmailVerification,
+  onAuthStateChanged,
+  signOut,
+} from "firebase/auth";
+import { useRouter } from "vue-router";
+import { ref } from "vue";
 
-  const showPopup = ref(true);
-  const secondsToWait = ref(60);
-  const activatedWait = ref(false);
-  const errMsg = ref("");
-  const router = useRouter();
+const showPopup = ref(true);
+const secondsToWait = ref(60);
+const activatedWait = ref(false);
+const errMsg = ref("");
+const router = useRouter();
+const auth = getAuth();
 
-  const closePopup = () => {
+const closePopup = () => {
+  signOut(auth).then(() => {
     showPopup.value = false;
-    router.go("/");
-  };
+    console.log("User signed out after registration.");
+    router.push("/sing-in");
+  });
+};
 
-  const auth = getAuth();
-  const handleSubmit = () => {
-    sendEmailVerification(auth.currentUser)
-      .then(() => {
-        console.log("Email verification sent.");
-        errMsg.value = "Email verification sent.";
-        activatedWait.value = true;
-        startCountdown(); // Iniciar el contador al enviar el correo
-      })
-      .catch((error) => {
-        console.error("Error sending email verification:", error);
-        (errMsg.value = "Error sending email verification:"), error;
-      });
-  };
+const handleSubmit = () => {
+  sendEmailVerification(auth.currentUser)
+    .then(() => {
+      console.log("Email verification sent.");
+      errMsg.value = "Email verification sent.";
+      activatedWait.value = true;
+      startCountdown(); // Iniciar el contador al enviar el correo
+    })
+    .catch((error) => {
+      console.error("Error sending email verification:", error);
+      (errMsg.value = "Error sending email verification:"), error;
+    });
+};
 
-  const startCountdown = () => {
-    let seconds = 60;
-    const interval = setInterval(() => {
-      secondsToWait.value = seconds;
-      seconds--;
-      if (seconds < 0) {
-        clearInterval(interval);
-        secondsToWait.value = 60; // Restablecer secondsToWait a su estado predeterminado
-        activatedWait.value = false;
-        errMsg.value = "";
-      }
-    }, 1000);
-  };
+const startCountdown = () => {
+  let seconds = 60;
+  const interval = setInterval(() => {
+    secondsToWait.value = seconds;
+    seconds--;
+    if (seconds < 0) {
+      clearInterval(interval);
+      secondsToWait.value = 60; // Restablecer secondsToWait a su estado predeterminado
+      activatedWait.value = false;
+      errMsg.value = "";
+    }
+  }, 1000);
+};
 </script>
 
 <template>

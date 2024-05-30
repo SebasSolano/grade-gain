@@ -5,7 +5,7 @@ const shapes = ref([]);
 
 const randomColor = () => `#${Math.floor(Math.random()*16777215).toString(16)}`;
 const randomSize = () => `${Math.floor(Math.random() * 100) + 200}px`;
-const randomPosition = () => `${Math.floor(Math.random() * 80)}%`;
+const randomPosition = () => `${Math.floor(Math.random() * 100)}%`;
 const randomShapeType = () => {
   const types = ['circle', 'triangle', 'square'];
   return types[Math.floor(Math.random() * types.length)];
@@ -27,7 +27,7 @@ const createShape = () => {
 };
 
 onMounted(() => {
-  const numberOfShapes = 20; // Ajusta este número para más o menos figuras
+  const numberOfShapes = 10; // Ajusta este número para más o menos figuras
   for (let i = 0; i < numberOfShapes; i++) {
     shapes.value.push(createShape());
   }
@@ -35,6 +35,7 @@ onMounted(() => {
 </script>
 
 <template>
+  <main class="flex-1 p-8 bg-white rounded-xl mt-6 mr-3 mb-6 overflow-hidden">
   <div class="shapes-container">
     <div
       v-for="(shape, index) in shapes"
@@ -43,6 +44,7 @@ onMounted(() => {
       class="shape"
     ></div>
   </div>
+</main>
 </template>
 
 <script>

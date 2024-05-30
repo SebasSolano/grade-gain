@@ -67,15 +67,16 @@
   };
 </script>
 <template>
+  <aside class="w-full md:w-96 p-6 rounded-2xl">
   <div
-    class="flex flex-col items-center justify-center h-screen bg-[#F5F5F5] rounded-2xl pt-5 py-5"
+    class="flex flex-col items-center justify-center h-screen bg-white rounded-2xl "
   >
     <div
-      class="absolute inset-y-14 text-center text-[5rem] flex items-start font-bold"
+      class="absolute inset-y-14 text-center text-[3.7rem] flex font-bold"
     >
       Grade <span class="text-[#57FE1E]">Gain</span>
     </div>
-    <div class="w-80 z-0">
+    <div class="mt-28 z-0">
       <div class="mb-4">
         <label for="email" class="block text-xl font-medium">Email:</label>
         <div class="relative">
@@ -141,7 +142,7 @@
           </div>
         </div>
       </div>
-      <div class="flex items-center mb-4 gap-1">
+      <div class="flex items-center mb-5 gap-1">
         <p>You don't have an account?,</p>
         <router-link
           to="/register"
@@ -150,12 +151,12 @@
           register here.</router-link
         >
       </div>
-      <div class="flex items-center justify-center mb-4">
+      <div class="flex items-center justify-center mb-5">
         <a @click="resetPass" class="text-sm hover:underline"
           >Did you forget your password?</a
         >
       </div>
-      <div class="text-center">
+      <div class="text-center mt-10">
         <button
           @click="login"
           class="bg-[#AEDB9F] text-xl font-semibold px-4 py-2 rounded-2xl hover:bg-[#9dec82] transition duration-300"
@@ -168,6 +169,7 @@
       </div>
     </div>
   </div>
+</aside>
 </template>
 
 <style></style>

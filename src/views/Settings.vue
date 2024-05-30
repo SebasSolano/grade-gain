@@ -1,11 +1,11 @@
 <script setup>
   import Menu from "../components/Menu.vue";
-  import Content from "../components/Content.vue"
+  import ContentSettings from "../components/ContentSettings.vue"
 </script>
 <template>
   <div class="min-h-screen bg-gray-100 flex flex-col md:flex-row">
       <Menu />
-      <Content/>
+      <ContentSettings />
   </div>
 </template>
 <style></style>
