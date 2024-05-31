@@ -1,101 +1,102 @@
 <script setup>
-import ContentBar from "./ContentBar.vue";
-import { ref, onMounted } from "vue";
-import {
-  getUserInfo,
-  updateDataUser,
-  updateProfilePicture,
-} from "../services/user.service";
-import { getAuth, updateProfile, onAuthStateChanged } from "firebase/auth";
-import Popup from "./Popup.vue";
-import RequestMail from "../components/RequestMail.vue";
-import { useRouter } from "vue-router";
+  import ContentBar from "./ContentBar.vue";
+  import { ref, onMounted } from "vue";
+  import {
+    getUserInfo,
+    updateDataUser,
+    updateProfilePicture,
+  } from "../services/user.service";
+  import { getAuth, updateProfile, onAuthStateChanged } from "firebase/auth";
+  import Popup from "./Popup.vue";
+  import RequestMail from "../components/RequestMail.vue";
+  import { useRouter } from "vue-router";
+  import Loading from "../components/Loading.vue";
 
-const auth = getAuth();
-const router = useRouter();
-const username = ref("");
-const photoURL = ref(null);
-const dataUser = ref({});
-const userId = ref(localStorage.getItem("uuid"));
-const bio = ref("");
-const website = ref("");
-const location = ref("");
-const errMsg = ref("");
-const popupInfo = ref({
-  message: "",
-  success: false,
-  showPopup: false,
-  linkRoute: "/sign-in",
-});
-const showMenu = ref(false);
-const loading = ref(true);
-const fileInputRef = ref(null); // Ref para el input file
+  const auth = getAuth();
+  const router = useRouter();
+  const username = ref("");
+  const photoURL = ref(null);
+  const dataUser = ref({});
+  const userId = ref(localStorage.getItem("uuid"));
+  const bio = ref("");
+  const website = ref("");
+  const location = ref("");
+  const errMsg = ref("");
+  const popupInfo = ref({
+    message: "",
+    success: false,
+    showPopup: false,
+    linkRoute: "/sign-in",
+  });
+  const showMenu = ref(false);
+  const loading = ref(true);
+  const fileInputRef = ref(null); // Ref para el input file
 
-onMounted(async () => {
-  try {
-    dataUser.value = await getUserInfo(userId.value);
-    username.value = dataUser.value.displayName;
-    bio.value = dataUser.value.bio;
-    website.value = dataUser.value.website;
-    location.value = dataUser.value.location;
-    photoURL.value = dataUser.value.photoURL;
-  } catch (error) {
-    console.error("Failed to fetch user data:", error);
-  } finally {
-    loading.value = false;
-  }
-});
-
-const updateUser = () => {
-  console.log(username.value, bio.value, website.value, location.value);
-  if (username.value !== "") {
-    updateDataUser(userId.value, {
-      username: username.value,
-      bio: bio.value,
-      website: website.value,
-      location: location.value,
-    }).then(() => {
-      popupInfo.value = {
-        message: "Update completed!",
-        success: true,
-        showPopup: true,
-        linkRoute: "/settings",
-      };
-    });
-  } else {
-    errMsg.value = "Error: You must at least fill in the Username field!";
-  }
-};
-
-const resetPass = () => {
-  showMenu.value = true;
-};
-
-// Función para manejar la selección del archivo
-const handleFileChange = async (event) => {
-  const file = event.target.files[0];
-  if (file) {
+  onMounted(async () => {
     try {
-      await updateProfilePicture(userId.value, file);
-      // Actualizar la foto de perfil en la UI
-      const userData = await getUserInfo(userId.value);
-      photoURL.value = userData.photoURL;
+      dataUser.value = await getUserInfo(userId.value);
+      username.value = dataUser.value.displayName;
+      bio.value = dataUser.value.bio;
+      website.value = dataUser.value.website;
+      location.value = dataUser.value.location;
+      photoURL.value = dataUser.value.photoURL;
     } catch (error) {
-      console.error("Error updating profile picture:", error);
+      console.error("Failed to fetch user data:", error);
     } finally {
-      updateProfile(auth.currentUser, {
-        photoURL: photoURL.value,
-      }).then(() => {
-        router.go("/settings");
-      });
+      loading.value = false;
     }
-  }
-};
+  });
 
-// Función para disparar el click del input file
-const triggerFileInput = () => {
-  fileInputRef.value.click();
-};
+  const updateUser = () => {
+    console.log(username.value, bio.value, website.value, location.value);
+    if (username.value !== "") {
+      updateDataUser(userId.value, {
+        username: username.value,
+        bio: bio.value,
+        website: website.value,
+        location: location.value,
+      }).then(() => {
+        popupInfo.value = {
+          message: "Update completed!",
+          success: true,
+          showPopup: true,
+          linkRoute: "/settings",
+        };
+      });
+    } else {
+      errMsg.value = "Error: You must at least fill in the Username field!";
+    }
+  };
+
+  const resetPass = () => {
+    showMenu.value = true;
+  };
+
+  // Función para manejar la selección del archivo
+  const handleFileChange = async (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      try {
+        await updateProfilePicture(userId.value, file);
+        // Actualizar la foto de perfil en la UI
+        const userData = await getUserInfo(userId.value);
+        photoURL.value = userData.photoURL;
+      } catch (error) {
+        console.error("Error updating profile picture:", error);
+      } finally {
+        updateProfile(auth.currentUser, {
+          photoURL: photoURL.value,
+        }).then(() => {
+          router.go("/settings");
+        });
+      }
+    }
+  };
+
+  // Función para disparar el click del input file
+  const triggerFileInput = () => {
+    fileInputRef.value.click();
+  };
 </script>
 <template>
   <RequestMail :resetPopup="showMenu" />
@@ -119,9 +120,7 @@ const triggerFileInput = () => {
               Change Password
             </button>
           </div>
-          <div v-if="loading" class="text-center">
-            <p>Loading user data...</p>
-          </div>
+            <Loading v-if="loading" />
           <div v-else class="mt-6 grid gap-4">
             <div class="flex items-center space-x-4 pb-10">
               <span
@@ -263,7 +262,7 @@ const triggerFileInput = () => {
 </template>
 
 <style scoped>
-.hidden {
-  display: none;
-}
+  .hidden {
+    display: none;
+  }
 </style>

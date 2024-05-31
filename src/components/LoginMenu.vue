@@ -104,7 +104,7 @@
               />
               <path d="M3 7l9 6l9 -6" />
             </svg>
-            <span class="text-gray-400 -mt-1 ml-1">|</span>
+            <span class="text-gray-400 ml-1">|</span>
           </div>
         </div>
       </div>
@@ -138,7 +138,7 @@
               <path d="M11 16a1 1 0 1 0 2 0a1 1 0 0 0 -2 0" />
               <path d="M8 11v-4a4 4 0 1 1 8 0v4" />
             </svg>
-            <span class="text-gray-400 -mt-1 ml-1">|</span>
+            <span class="text-gray-400 ml-1">|</span>
           </div>
         </div>
       </div>

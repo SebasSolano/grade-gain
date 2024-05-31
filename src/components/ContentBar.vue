@@ -2,6 +2,7 @@
 import { ref, watch, computed } from "vue";
 import { useRouter, useRoute } from "vue-router";
 import { searchGroups } from "../services/searchEngine.service";
+import { createGroup } from "../services/group.service";
 
 const searchQuery = ref("");
 const searchResults = ref([]);
@@ -9,6 +10,9 @@ const showPopup = ref(false);
 const groupName = ref("");
 const fileInputRef = ref(null);
 const errMsg = ref("");
+const uuid = ref(localStorage.getItem("uuid"));
+const group = ref(null);
+const file = ref(null);
 
 watch(searchQuery, async (newQuery) => {
   searchResults.value = await searchGroups(newQuery);
@@ -37,18 +41,36 @@ const triggerFileInput = () => {
   fileInputRef.value.click();
 };
 
-const createGroup = () => {
-  if (groupName.value !== "" && fileInputRef.value !== null) {
-
-
-
-
+const handleCreateGroup = async () => {
+  if (groupName.value !== "" && file.value) {
+    try {
+      group.value = await createGroup(uuid.value, groupName.value, file.value);
+    } catch (error) {
+      errMsg.value = "Error creating the group: " + error.message;
+      setTimeout(() => {
+        errMsg.value = "";
+      }, 2000);
+    } finally {
+      setTimeout(() => {
+        showPopup.value = false;
+        group.value = null;
+        router.go("/");
+      }, 3000);
+    }
   } else {
     errMsg.value = "You must add a name or an image.";
     setTimeout(() => {
       errMsg.value = "";
     }, 2000);
   }
+};
+
+const handleGroup = (event) => {
+  file.value = event.target.files[0];
+};
+
+const navigateToGroup = (groupId) => {
+  router.push(`/group/own/${groupId}`);
 };
 </script>
 
@@ -123,7 +145,7 @@ const createGroup = () => {
             type="file"
             ref="fileInputRef"
             class="hidden"
-            @change="handleFileChange"
+            @change="handleGroup"
             accept="image/*"
           />
           <button
@@ -154,7 +176,7 @@ const createGroup = () => {
       <p class="text-red-500 text-center p-5">{{ errMsg }}</p>
       <div class="flex justify-end">
         <button
-          @click="createGroup"
+          @click="handleCreateGroup"
           class="text-lg bg-[#AEDB9F] hover:bg-[#76cc59] font-semibold px-4 py-2 rounded-2xl transition duration-300"
         >
           Create
@@ -170,7 +192,7 @@ const createGroup = () => {
       <button
         v-if="showButton"
         @click="back"
-        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 rounded-lg"
+        class="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium transition-colors h-10 px-4 py-2 rounded-lg"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -220,7 +242,8 @@ const createGroup = () => {
           <li
             v-for="group in searchResults"
             :key="group.id"
-            class="px-4 py-2 hover:bg-gray-100"
+            class="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+            @click="navigateToGroup(group.id)"
           >
             {{ group.name }}
           </li>
@@ -244,7 +267,7 @@ const createGroup = () => {
 </template>
 
 <style scoped>
-.hidden {
-  display: none;
-}
+  .hidden {
+    display: none;
+  }
 </style>

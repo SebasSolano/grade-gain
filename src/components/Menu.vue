@@ -25,7 +25,7 @@ const handleSignOut = () => {
 
 onAuthStateChanged(auth, async (user) => {
   if (user) {
-    console.log(user)
+    //console.log(user)
     username.value = user.displayName;
     photoURL.value = user.photoURL;
   }
@@ -33,10 +33,10 @@ onAuthStateChanged(auth, async (user) => {
 
 
 onMounted(async () => {
-  console.log(userId.value)
+  //console.log(userId.value)
   dataUser.value = await getUserInfo(userId.value);
   medals.value = dataUser.value.medals
-  console.log(dataUser.value)
+  //console.log(dataUser.value)
 });
 </script>
 <template>
@@ -52,7 +52,7 @@ onMounted(async () => {
       </span>
       <div class="flex flex-col items-center space-y-2">
         <div class="text-lg text-center">{{ username }}</div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2 hover:underline">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"
@@ -72,7 +72,7 @@ onMounted(async () => {
             <span class="text-sm text-gray-500">Settings</span>
           </router-link>
         </div>
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-2 hover:cursor-pointer">
           <svg
             xmlns="http://www.w3.org/2000/svg"
             width="24"

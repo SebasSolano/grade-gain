@@ -49,6 +49,8 @@ const register = async () => {
                   location: "",
                   id_subscription: "jcJwJl4Yyw0UURJGr3yz",
                   medals: 0,
+                  entered_groups: 0,
+                  groups_created: 0,
                   status: true,
                   id_rol: 103,
                   createAt: Timestamp.now(),

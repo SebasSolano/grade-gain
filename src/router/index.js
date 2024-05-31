@@ -18,12 +18,34 @@ const router = createRouter({
         requireAuth: true,
       },
     },
-      {
-        path: "/validate-user",
-        component: () => import("../views/ValidateUser.vue"),
+    {
+      path: "/group/own/:id",
+      component: () => import("../views/OwnGroup.vue"),
+      meta: {
+        requireAuth: true,
       },
-    { path: "/sing-in", component: () => import("../views/SingIn.vue"), meta: { guestOnly: true } },
-    { path: "/register", component: () => import("../views/Register.vue"), meta: { guestOnly: true } },
+    },
+    {
+      path: "/group/your/:id",
+      component: () => import("../views/YourGroup.vue"),
+      meta: {
+        requireAuth: true,
+      },
+    },
+    {
+      path: "/validate-user",
+      component: () => import("../views/ValidateUser.vue"),
+    },
+    {
+      path: "/sing-in",
+      component: () => import("../views/SingIn.vue"),
+      meta: { guestOnly: true },
+    },
+    {
+      path: "/register",
+      component: () => import("../views/Register.vue"),
+      meta: { guestOnly: true },
+    },
   ],
 });
 
@@ -42,7 +64,7 @@ const getCurrentUser = () => {
 
 router.beforeEach(async (to, from, next) => {
   const user = await getCurrentUser();
-  if (to.matched.some(record => record.meta.requireAuth)) {
+  if (to.matched.some((record) => record.meta.requireAuth)) {
     if (!user) {
       next("/sing-in");
     } else if (!user.emailVerified) {
@@ -50,14 +72,14 @@ router.beforeEach(async (to, from, next) => {
     } else {
       next();
     }
-  } else if (to.matched.some(record => record.meta.guestOnly)) {
+  } else if (to.matched.some((record) => record.meta.guestOnly)) {
     if (user) {
-      next("/"); 
+      next("/");
     } else {
       next();
     }
   } else {
-    next(); 
+    next();
   }
 });
 

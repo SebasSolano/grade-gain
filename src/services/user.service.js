@@ -24,7 +24,7 @@ async function getUserInfo(userId) {
   const userSnap = await getDoc(userRef);
 
   if (userSnap.exists()) {
-    console.log("User data:", userSnap.data());
+    //console.log("User data:", userSnap.data());
     return userSnap.data();
   } else {
     console.log("No such document!");
