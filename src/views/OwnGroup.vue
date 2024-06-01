@@ -1,7 +1,7 @@
 <script setup>
   import { ref, onMounted } from "vue";
   import Menu from "../components/Menu.vue";
-  import ContentOwnGroup from "../components/ContentOwnGroup.vue";
+  import ContentGroup from "../components/ContentGroup.vue";
   import { useRouter, useRoute } from "vue-router";
   import { getGroupMemberById } from "../services/group.service";
 
@@ -35,7 +35,7 @@
 <template>
   <div class="min-h-screen bg-gray-100 flex flex-col md:flex-row">
     <Menu />
-    <ContentOwnGroup />
+    <ContentGroup />
   </div>
 </template>
 <style></style>

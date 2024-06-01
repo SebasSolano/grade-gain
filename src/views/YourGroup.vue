@@ -1,13 +1,41 @@
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRoute } from 'vue-router';
+  import { ref, onMounted } from "vue";
+  import Menu from "../components/Menu.vue";
+  import ContentGroup from "../components/ContentGroup.vue";
+  import { useRouter, useRoute } from "vue-router";
+  import { getGroupMemberById } from "../services/group.service";
 
-const id = ref(null);
-const route = useRoute();
+  const route = useRoute();
+  const groupId = ref(null);
+  const error = ref(null);
+  const router = useRouter();
+  const uuid = ref(localStorage.getItem("uuid"));
 
-onMounted(() => {
-  id.value = route.params.id;
-});
+  onMounted(async () => {
+    groupId.value = route.params.id;
+    try {
+      const member = await getGroupMemberById(groupId.value, uuid.value);
+
+      if (!member) {
+        error.value = "You are not a member of this group.";
+        router.push("/");
+        return;
+      }
+
+      if (member.role === "admin") {
+        router.push(`/group/own/${groupId.value}`);
+      }
+    } catch (err) {
+      error.value = "An error occurred while validating group membership.";
+      console.error(err);
+      router.push("/");
+    }
+  });
 </script>
-<template>Grupo: {{ id }}</template>
+<template>
+  <div class="min-h-screen bg-gray-100 flex flex-col md:flex-row">
+    <Menu />
+    <ContentGroup />
+  </div>
+</template>
 <style></style>

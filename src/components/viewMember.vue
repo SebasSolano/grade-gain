@@ -1,5 +1,9 @@
 <script setup>
   import { ref, onMounted } from "vue";
+  import { expelMemberFromGroup, getUserGroupFiles } from "../services/group.service";
+  import { useRoute, useRouter } from "vue-router";
+  import Alert from "./Alert.vue";
+  import ViewCheckNote from "./viewCheckNote.vue"
   // Props
   const props = defineProps({
     member: {
@@ -12,10 +16,30 @@
     },
   });
 
+  const msg = ref("");
+  const alert = ref("");
+
   const member = ref(null);
   const role = ref(null);
+  const route = useRoute();
+  const router = useRouter();
+  const showPopup = ref(false);
+  const filesNotes = ref([])
 
-  onMounted(() => {
+  onMounted(async() => {
+
+
+    try {
+
+      filesNotes.value = await getUserGroupFiles(route.params.id, props.member.userId);
+      console.log(filesNotes.value)
+      console.log(filesNotes.value)
+      
+    } catch (error) {
+      console.error(error)
+    }
+
+
     //console.log(props.groups);
     if (props.groups) {
       member.value = props.member;
@@ -23,19 +47,97 @@
       role.value = props.member.role;
     }
   });
+
+  const deleteMember = async () => {
+    console.log("entro 1");
+    try {
+      await expelMemberFromGroup(route.params.id, props.member.userId);
+    } catch (error) {
+      alert.value = "Error";
+      msg.value = "" + error;
+      setTimeout(() => {
+        alert.value = "";
+        msg.value = "";
+      }, 2000);
+    } finally {
+      alert.value = "Success";
+      msg.value = `The member has been expelled: ${props.member.userInfo.displayName} successfully!`;
+      setTimeout(() => {
+        alert.value = "";
+        msg.value = "";
+        router.go()
+      }, 2000);
+    }
+  };
+
+  const showEditCheck = () => {
+    showPopup.value = !showPopup.value;
+  };
 </script>
 <template>
-  <div class="flex items-center space-x-4">
+  <Alert v-if="alert && msg" :alert="alert" :text="msg" />
+
+  <div
+    v-if="showPopup"
+    class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-80 z-50"
+  >
+    <div class="bg-white rounded-lg p-8 w-[70%]">
+      <div class="flex justify-end">
+        <button
+          @click="showEditCheck"
+          class="text-gray-600 hover:text-gray-800 focus:outline-none"
+        >
+          <svg
+            class="h-6 w-6"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              fill-rule="evenodd"
+              d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+              clip-rule="evenodd"
+            ></path>
+          </svg>
+        </button>
+      </div>
+
+      <h2 class="text-2xl font-bold mb-4">Validate members notes.</h2>
+      <div
+            class="grid grid-cols-3 gap-10 max-h-[700px] items-center justify-center p-5 overflow-y-auto"
+          >
+            <div
+              v-for="(files, index) in filesNotes"
+              :key="files.fileId"
+              class="flex items-center justify-center"
+            >
+              <ViewCheckNote :files="files" :role="props.role" />
+              
+            </div>
+          </div>
+      
+
+    </div>
+  </div>
+
+  <div class="flex items-center space-x-4 border border-white p-2 rounded-md">
     <span class="relative flex shrink-0 overflow-hidden rounded-full w-12 h-12">
-      <img class="aspect-square h-full w-full" alt="User profile" :src="props.member.userInfo.photoURL" />
+      <img
+        class="aspect-square h-full w-full"
+        alt="User profile"
+        :src="props.member.userInfo.photoURL"
+      />
     </span>
     <div class="flex items-center justify-between w-full">
       <div>
-        <div class="text-base font-semibold">{{ props.member.userInfo.displayName }}</div>
+        <div class="text-base font-semibold">
+          {{ props.member.userInfo.displayName }}
+        </div>
         <div class="text-gray-500">{{ props.member.userInfo.email }}</div>
       </div>
       <div class="flex items-center space-x-2">
-        <svg v-if="props.member.role === 'admin'"
+        <svg
+          v-if="props.member.role === 'admin'"
           xmlns="http://www.w3.org/2000/svg"
           width="24"
           height="24"
@@ -52,8 +154,10 @@
           ></path>
           <path d="m9 12 2 2 4-4"></path>
         </svg>
-        <button v-if="props.member.role === 'member' && props.role === 'admin'"
-          class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+        <button
+          v-if="props.member.role === 'member' && props.role === 'admin'"
+          @click="deleteMember"
+          class="inline-flex items-center justify-center rounded-xl text-sm font-medium hover:bg-red-300 hover:text-accent-foreground h-10 w-10"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -71,10 +175,11 @@
             <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
             <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
           </svg>
-          <span class="sr-only">Expulsar</span>
         </button>
-        <button v-if="props.member.role === 'member' && props.role === 'admin'"
-          class="inline-flex items-center justify-center whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 hover:bg-accent hover:text-accent-foreground h-10 w-10"
+        <button
+          v-if="props.member.role === 'member' && props.role === 'admin'"
+          @click="showEditCheck"
+          class="inline-flex items-center justify-center rounded-xl text-sm font-medium hover:bg-yellow-300 hover:text-accent-foreground h-10 w-10"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

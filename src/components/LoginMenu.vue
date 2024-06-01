@@ -23,6 +23,7 @@
       // Se necesita .value por el uso de ref()
       signInWithEmailAndPassword(auth, email.value, password.value)
         .then((data) => {
+          localStorage.setItem("uuid", data.user.uid)
           console.log("Successfully singed in!");
           console.log(auth.currentUser);
           emits("login", {

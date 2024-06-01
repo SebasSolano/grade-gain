@@ -19,6 +19,27 @@ const router = createRouter({
       },
     },
     {
+      path: "/top",
+      component: () => import("../views/Top.vue"),
+      meta: {
+        requireAuth: true,
+      },
+    },
+    {
+      path: "/support",
+      component: () => import("../views/Support.vue"),
+      meta: {
+        requireAuth: true,
+      },
+    },
+    {
+      path: "/plans",
+      component: () => import("../views/Plans.vue"),
+      meta: {
+        requireAuth: true,
+      },
+    },
+    {
       path: "/group/own/:id",
       component: () => import("../views/OwnGroup.vue"),
       meta: {

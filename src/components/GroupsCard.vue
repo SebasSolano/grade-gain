@@ -42,7 +42,7 @@
 
 <template>
   <div
-    class="border text-card-foreground shadow-sm bg-[#E8E8E8] rounded-3xl overflow-hidden relative group"
+    class="transition-all hover:cursor-pointer hover:scale-105 duration-700 border text-card-foreground shadow-sm bg-[#E8E8E8] rounded-3xl overflow-hidden relative group w-96 max-w-96 min-w-80"
     data-v0-t="card"
   >
     <img
@@ -55,7 +55,7 @@
         <h3 class="text-lg font-semibold">{{ groups.name }}</h3>
         <button
           @click="navigateToGroup(groups.id)"
-          class="inline-flex items-center text-lg h-14 w-14 p-4 justify-between rounded-full bg-white hover:bg-gray-300 text-gray-500 transition-colors opacity-0 group-hover:opacity-100"
+          class="inline-flex items-center text-lg h-14 w-14 p-4 justify-between rounded-full bg-white hover:bg-gray-300 text-gray-500 transition-all duration-300 opacity-0 group-hover:opacity-100"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

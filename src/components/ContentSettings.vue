@@ -120,7 +120,7 @@
               Change Password
             </button>
           </div>
-            <Loading v-if="loading" />
+          <Loading v-if="loading" />
           <div v-else class="mt-6 grid gap-4">
             <div class="flex items-center space-x-4 pb-10">
               <span
@@ -136,7 +136,24 @@
                 <div class="text-lg font-semibold">
                   {{ dataUser.displayName }}
                 </div>
-                <div class="text-gray-500">{{ dataUser.email }}</div>
+                <div class="text-gray-500">
+                  {{ dataUser.email }}
+                  <span
+                    v-if="dataUser.id_rol === 100"
+                    class="transition-all duration-300 bg-yellow-300 p-1 rounded-md text-gray-600 hover:cursor-pointer"
+                    >DEV</span
+                  >
+                  <span
+                    v-if="dataUser.id_rol === 101"
+                    class="bg-red-300 p-1 rounded-md text-gray-600 hover:cursor-pointer"
+                    >ADMIN</span
+                  >
+                  <span
+                    v-if="dataUser.id_rol === 102"
+                    class="bg-green-300 p-1 rounded-md text-gray-600 hover:cursor-pointer"
+                    >MOD</span
+                  >
+                </div>
               </div>
               <input
                 type="file"

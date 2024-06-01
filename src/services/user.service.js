@@ -4,7 +4,12 @@ import {
   doc,
   setDoc,
   getDoc,
-  updateDoc
+  updateDoc,
+  getDocs,
+  collection,
+  query,
+  orderBy,
+  limit
 } from "firebase/firestore";
 import { uploadBytes, ref, getDownloadURL } from "firebase/storage";
 
@@ -57,4 +62,28 @@ async function updateProfilePicture(uuid, file) {
   }
 }
 
-export { addDataUser, getUserInfo, updateDataUser, updateProfilePicture };
+async function getTopUsersByMedals(limitCount = 100) {
+  try {
+    const usersRef = collection(db, "users");
+    const q = query(usersRef, orderBy("medals", "desc"), limit(limitCount));
+    const usersSnap = await getDocs(q);
+
+    const topUsers = usersSnap.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
+    console.log(topUsers)
+    return topUsers;
+  } catch (error) {
+    console.error("Error retrieving top users by medals:", error);
+    throw error;
+  }
+}
+
+export {
+  addDataUser,
+  getUserInfo,
+  updateDataUser,
+  updateProfilePicture,
+  getTopUsersByMedals,
+};

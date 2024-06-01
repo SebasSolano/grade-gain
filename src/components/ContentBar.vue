@@ -1,77 +1,105 @@
 <script setup>
-import { ref, watch, computed } from "vue";
-import { useRouter, useRoute } from "vue-router";
-import { searchGroups } from "../services/searchEngine.service";
-import { createGroup } from "../services/group.service";
+  import { ref, watch, computed } from "vue";
+  import { useRouter, useRoute } from "vue-router";
+  import { searchGroups } from "../services/searchEngine.service";
+  import { createGroup, addMemberToGroup } from "../services/group.service";
 
-const searchQuery = ref("");
-const searchResults = ref([]);
-const showPopup = ref(false);
-const groupName = ref("");
-const fileInputRef = ref(null);
-const errMsg = ref("");
-const uuid = ref(localStorage.getItem("uuid"));
-const group = ref(null);
-const file = ref(null);
+  const searchQuery = ref("");
+  const searchResults = ref([]);
+  const showPopup = ref(false);
+  const groupName = ref("");
+  const fileInputRef = ref(null);
+  const errMsg = ref("");
+  const uuid = ref(localStorage.getItem("uuid"));
+  const group = ref(null);
+  const file = ref(null);
+  const showJoin = ref(false);
+  const joinCode = ref("");
 
-watch(searchQuery, async (newQuery) => {
-  searchResults.value = await searchGroups(newQuery);
-});
+  watch(searchQuery, async (newQuery) => {
+    searchResults.value = await searchGroups(newQuery);
+  });
 
-const router = useRouter();
-const route = useRoute();
+  const router = useRouter();
+  const route = useRoute();
 
-const back = () => {
-  router.go(-1);
-};
+  const back = () => {
+    if (route.path === `/group/your/${route.params.id}`) {
+      router.go(-2);
+    } else {
+      router.back();
+    }
+  };
 
-const showButton = computed(() => {
-  return route.path !== "/";
-});
+  const showButton = computed(() => {
+    return route.path !== "/";
+  });
 
-const openPopup = () => {
-  showPopup.value = true;
-};
+  const openPopup = () => {
+    showPopup.value = true;
+  };
 
-const closePopup = () => {
-  showPopup.value = false;
-};
+  const closePopup = () => {
+    showPopup.value = false;
+  };
 
-const triggerFileInput = () => {
-  fileInputRef.value.click();
-};
+  const triggerFileInput = () => {
+    fileInputRef.value.click();
+  };
 
-const handleCreateGroup = async () => {
-  if (groupName.value !== "" && file.value) {
-    try {
-      group.value = await createGroup(uuid.value, groupName.value, file.value);
-    } catch (error) {
-      errMsg.value = "Error creating the group: " + error.message;
+  const handleCreateGroup = async () => {
+    if (groupName.value !== "" && file.value) {
+      try {
+        group.value = await createGroup(
+          uuid.value,
+          groupName.value,
+          file.value
+        );
+      } catch (error) {
+        errMsg.value = "Error creating the group: " + error.message;
+        setTimeout(() => {
+          errMsg.value = "";
+        }, 2000);
+      } finally {
+        setTimeout(() => {
+          showPopup.value = false;
+          group.value = null;
+          router.go("/");
+        }, 3000);
+      }
+    } else {
+      errMsg.value = "You must add a name or an image.";
       setTimeout(() => {
         errMsg.value = "";
       }, 2000);
-    } finally {
-      setTimeout(() => {
-        showPopup.value = false;
-        group.value = null;
-        router.go("/");
-      }, 3000);
     }
-  } else {
-    errMsg.value = "You must add a name or an image.";
-    setTimeout(() => {
-      errMsg.value = "";
-    }, 2000);
-  }
-};
+  };
 
-const handleGroup = (event) => {
-  file.value = event.target.files[0];
-};
+  const handleGroup = (event) => {
+    file.value = event.target.files[0];
+  };
 
-const navigateToGroup = (groupId) => {
-  router.push(`/group/own/${groupId}`);
-};
+  const navigateToGroup = (groupId) => {
+    router.push(`/group/own/${groupId}`);
+  };
+
+  const openJoin = () => {
+    showJoin.value = !showJoin.value;
+  };
+
+  const joinGroup = async () => {
+    if (joinCode.value !== "") {
+      try {
+        await addMemberToGroup(joinCode.value, uuid.value, "member");
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setTimeout(() => {
+          router.push(`/group/your/${joinCode.value}`);
+        }, 2000);
+      }
+    }
+  };
 </script>
 
 <template>
@@ -250,18 +278,40 @@ const navigateToGroup = (groupId) => {
         </ul>
       </div>
     </div>
-    <div class="flex space-x-2">
-      <button
-        class="bg-[#CAFAE1] text-md font-semibold px-4 py-2 rounded-full hover:bg-[#c1e8fc] transition duration-300"
+    <div class="flex flex-col items-center space-y-4">
+      <div class="flex space-x-2 mr-10">
+        <button
+          @click="openJoin"
+          class="bg-[#CAFAE1] text-md font-semibold px-4 py-2 rounded-full hover:bg-[#c1e8fc] transition duration-300"
+        >
+          Join
+        </button>
+        <button
+          @click="openPopup"
+          class="bg-[#AEDB9F] text-md font-semibold px-4 py-2 rounded-full hover:bg-[#9dec82] transition duration-300"
+        >
+          Create
+        </button>
+      </div>
+      <div
+        v-if="showJoin"
+        class="absolute bg-[#E8E8E8] rounded-2xl p-8 shadow-lg flex items-center space-x-4 right-10 top-24"
       >
-        Join
-      </button>
-      <button
-        @click="openPopup"
-        class="bg-[#AEDB9F] text-md font-semibold px-4 py-2 rounded-full hover:bg-[#9dec82] transition duration-300"
-      >
-        Create
-      </button>
+        <div
+          class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-4 h-4 bg-[#E8E8E8] rotate-45"
+        ></div>
+        <input
+          v-model="joinCode"
+          class="block h-10 w-full text-md text-center rounded-full bg-white border-gray-300 shadow-sm focus:border-gray-300 focus:ring focus:ring-gray-300 focus:ring-opacity-50 flex-1"
+          placeholder="Enter the code"
+        />
+        <button
+          @click="joinGroup"
+          class="bg-[#CAFAE1] text-md font-semibold px-4 py-2 rounded-full hover:bg-[#c1e8fc] transition duration-300"
+        >
+          Join
+        </button>
+      </div>
     </div>
   </div>
 </template>

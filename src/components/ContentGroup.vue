@@ -10,6 +10,9 @@
     updateDataSettings,
     addShopToGroup,
     getStoreItems,
+    getUserGroupFiles,
+    getTopMembersAndUpdateMedals,
+    deleteGroup
   } from "../services/group.service";
   import Loading from "../components/Loading.vue";
   import viewMember from "../components/viewMember.vue";
@@ -17,6 +20,9 @@
   import { Timestamp } from "firebase/firestore";
   import viewTop from "../components/viewTop.vue";
   import viewStore from "../components/viewStore.vue";
+  import viewUploadNote from "../components/viewUploadNote.vue";
+  import ViewCheckNote from "./viewCheckNote.vue";
+  import Alert from "./Alert.vue";
 
   const uuid = ref(localStorage.getItem("uuid"));
 
@@ -28,23 +34,27 @@
   const sortedMembers = ref([]);
   const topMembers = ref([]);
   const itemsStore = ref([]);
-  const role = ref(null);
+  const filesNotes = ref([]);
+  const role = ref([]);
   const formattedDate = ref(null);
   const subscriptionInfo = ref(null);
 
   const loading = ref(true);
   const errMsg = ref("");
+  const alert = ref("");
 
   // Data Group
   const joined_members = ref(0);
   const name = ref(null);
 
   //Views
-  const showMembers = ref(false);
+  const showMembers = ref(true);
   const showTop = ref(false);
-  const showStore = ref(true);
+  const showStore = ref(false);
   const showSettings = ref(false);
   const showPopup = ref(false);
+  const showUploadNote = ref(false);
+  const showCheckNote = ref(false);
 
   //Settings
   const maxMembers = ref(0);
@@ -62,7 +72,7 @@
       let adminSubscriptionId = null;
 
       role.value = await getGroupMemberById(groupId.value, uuid.value);
-      //console.log(role.value.role);
+      //console.log(role.value);
       group.value = await getGroupById(groupId.value);
       maxMembers.value = group.value.settings.maxMembers;
       maxNote.value = group.value.settings.maxNote;
@@ -79,14 +89,16 @@
       });
       subscriptionInfo.value = await getSubscriptionInfo(adminSubscriptionId);
       itemsStore.value = await getStoreItems(groupId.value);
-      console.log(itemsStore.value);
+      //console.log(itemsStore.value);
+      filesNotes.value = await getUserGroupFiles(groupId.value, uuid.value);
+      //console.log(filesNotes.value);
       topMembers.value = await getTopMembersByPoints(groupId.value);
       const finishedDate = new Date(group.value.finished.toDate());
       formattedDate.value = `${finishedDate.getDate()}-${
         finishedDate.getMonth() + 1
       }-${finishedDate.getFullYear()}`;
-      console.log(group.value.items_store);
-      console.log(subscriptionInfo.value.maxItemShop);
+      //console.log(group.value.items_store);
+      //console.log(subscriptionInfo.value.maxItemShop);
       //console.log(topMembers.value);
     } catch (error) {
       console.error("Error loading group details or members:", error);
@@ -100,28 +112,55 @@
     showMembers.value = true;
     showStore.value = false;
     showTop.value = false;
+    showUploadNote.value = false;
+    showCheckNote.value = false;
   };
 
   const viewTops = () => {
     showTop.value = true;
     showMembers.value = false;
     showStore.value = false;
+    showUploadNote.value = false;
+    showCheckNote.value = false;
   };
 
   const viewStores = () => {
     showStore.value = true;
     showTop.value = false;
     showMembers.value = false;
+    showUploadNote.value = false;
+    showCheckNote.value = false;
+  };
+
+  const viewUploads = () => {
+    showStore.value = false;
+    showTop.value = false;
+    showMembers.value = false;
+    showUploadNote.value = true;
+    showCheckNote.value = false;
+  };
+
+  const viewChecks = () => {
+    showStore.value = false;
+    showTop.value = false;
+    showMembers.value = false;
+    showUploadNote.value = false;
+    showCheckNote.value = true;
   };
   const toggleSettings = () => {
     showSettings.value = !showSettings.value;
   };
 
   const copyPromptToClipboard = (value) => {
+    let newGroupId = value.toString();
     navigator.clipboard
       .writeText(value)
       .then(() => {
         console.log("Prompt copied to clipboard!");
+        groupId.value = "COPIED ✔️";
+        setTimeout(() => {
+          groupId.value = newGroupId;
+        }, 1000);
       })
       .catch((err) => {
         console.error("Could not copy prompt: ", err);
@@ -208,9 +247,32 @@
       errMsg.value = `You have reached the limit of adding an item to the store with a maximum of: ${subscriptionInfo.value.maxItemShop} `;
     }
   };
+
+  const finishedNote = async () => {
+    try {
+      await getTopMembersAndUpdateMedals(groupId.value);
+      await deleteGroup(groupId.value)
+    } catch (error) {
+      alert.value = "Error";
+      errMsg.value = error;
+      setTimeout(() => {
+        alert.value = "";
+        errMsg.value = "";
+      }, 2000);
+    } finally {
+      alert.value = "Success";
+      errMsg.value = "The group has been successfully finished!";
+      setTimeout(() => {
+        alert.value = "";
+        errMsg.value = "";
+        router.push("/")
+      }, 2000);
+    }
+  };
 </script>
 <template>
   <Loading v-if="loading" />
+  <Alert v-if="alert && errMsg" :alert="alert" :text="errMsg" />
   <div
     v-if="showPopup"
     class="fixed top-0 left-0 w-full h-full flex items-center justify-center bg-gray-900 bg-opacity-80 z-50"
@@ -317,23 +379,30 @@
       </div>
     </div>
   </div>
-  <main class="flex-1 p-8 bg-white rounded-xl mt-6 mr-3 mb-6">
+
+  <main v-if="!loading" class="flex-1 p-8 bg-white rounded-xl mt-6 mr-3 mb-6">
     <ContentBar />
     <section class="mb-6">
       <div class="grid gap-6">
         <div class="flex items-center justify-between">
-          <h2 class="text-3xl font-bold">Own Groups</h2>
+          <h2 v-if="role.role === 'admin'" class="text-3xl font-bold">
+            Own Groups
+          </h2>
+          <h2 v-if="role.role === 'member'" class="text-3xl font-bold">
+            Your Groups -
+            <span class="text-green-200">{{ role.points }} </span> Points
+          </h2>
           <div class="flex items-center space-x-2">
             <div>
               <span class="text-xl">{{ name }} - #</span>
               <span
                 @click="copyPromptToClipboard(groupId)"
-                class="text-gray-500 hover:cursor-pointer hover:underline hover:text-green-500"
+                class="text-gray-500 transition-all duration-500 hover:p-3 hover:cursor-pointer hover:bg-gray-100 hover:rounded-md hover:text-green-500"
               >
                 {{ groupId }}</span
               >
             </div>
-            <div class="relative">
+            <div v-if="role.role === 'admin'" class="relative">
               <button
                 @click="toggleSettings"
                 class="transition-all duration-1000 inline-flex items-center justify-center rounded-full text-sm font-medium border border-input p-2 hover:bg-gray-200"
@@ -427,6 +496,7 @@
                 <p class="text-red-500 text-center p-5">{{ errMsg }}</p>
                 <div class="flex mt-10 items-center justify-end">
                   <button
+                    @click="finishedNote"
                     class="transition duration-300 bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-full mr-2"
                   >
                     Finish group
@@ -454,7 +524,7 @@
               'bg-[#595959] text-white': showMembers,
               'bg-[#E8E8E8]': !showMembers,
             }"
-            class="flex items-center whitespace-nowrap rounded-3xl text-2xl font-medium transition-all duration-300 bg-[#E8E8E8] hover:bg-[#595959] hover:text-white h-10 w-48 py-10 justify-center"
+            class="flex items-center whitespace-nowrap rounded-3xl text-2xl font-medium transition-all duration-300 hover:bg-[#595959] hover:text-white h-10 w-56 py-10 justify-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -482,7 +552,7 @@
               'bg-[#595959] text-white': showTop,
               'bg-[#E8E8E8]': !showTop,
             }"
-            class="flex items-center whitespace-nowrap rounded-3xl text-2xl font-medium transition-all duration-300 bg-[#E8E8E8] hover:bg-[#595959] hover:text-white h-10 w-48 py-10 justify-center"
+            class="flex items-center whitespace-nowrap rounded-3xl text-2xl font-medium transition-all duration-300 hover:bg-[#595959] hover:text-white h-10 w-56 py-10 justify-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -507,7 +577,7 @@
               'bg-[#595959] text-white': showStore,
               'bg-[#E8E8E8]': !showStore,
             }"
-            class="flex items-center whitespace-nowrap rounded-3xl text-2xl font-medium transition-all duration-300 bg-[#E8E8E8] hover:bg-[#595959] hover:text-white h-10 w-48 py-10 justify-center"
+            class="flex items-center whitespace-nowrap rounded-3xl text-2xl font-medium transition-all duration-300 hover:bg-[#595959] hover:text-white h-10 w-56 py-10 justify-center"
           >
             <svg
               xmlns="http://www.w3.org/2000/svg"
@@ -528,6 +598,64 @@
               <path d="M16 10a4 4 0 0 1-8 0"></path>
             </svg>
             STORE
+          </button>
+          <button
+            v-if="role.role === 'member'"
+            @click="viewUploads"
+            :class="{
+              'bg-[#595959] text-white': showUploadNote,
+              'bg-[#E8E8E8]': !showUploadNote,
+            }"
+            class="flex items-center whitespace-nowrap rounded-3xl text-2xl font-medium transition-all duration-300 hover:bg-[#595959] hover:text-white h-10 w-56 py-10 justify-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="mr-2"
+            >
+              <path
+                d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"
+              ></path>
+              <path d="M3 6h18"></path>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            UPLOAD NOTE
+          </button>
+          <button
+            v-if="role.role === 'member'"
+            @click="viewChecks"
+            :class="{
+              'bg-[#595959] text-white': showCheckNote,
+              'bg-[#E8E8E8]': !showCheckNote,
+            }"
+            class="flex items-center whitespace-nowrap rounded-3xl text-2xl font-medium transition-all duration-300 hover:bg-[#595959] hover:text-white h-10 w-56 py-10 justify-center"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="28"
+              height="28"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              class="mr-2"
+            >
+              <path
+                d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"
+              ></path>
+              <path d="M3 6h18"></path>
+              <path d="M16 10a4 4 0 0 1-8 0"></path>
+            </svg>
+            CHECK NOTE
           </button>
         </div>
         <div
@@ -579,10 +707,11 @@
               :key="item.id"
               class="flex items-center justify-center"
             >
-              <viewStore :item="item" :role="role.role" />
+              <viewStore v-if="showStore" :item="item" :role="role.role" />
             </div>
             <div class="flex items-center justify-center">
               <button
+                v-if="role.role === 'admin'"
                 @click="showAddItem"
                 class="flex items-center justify-center transition-all duration-700 bg-green-400 rounded-full w-28 h-28 shadow-md hover:shadow-xl hover:scale-105 hover:bg-green-500"
               >
@@ -603,6 +732,34 @@
                   <path d="M5 12l14 0" />
                 </svg>
               </button>
+            </div>
+          </div>
+        </div>
+        <div
+          v-if="showUploadNote && role.role === 'member'"
+          class="border text-card-foreground shadow-sm bg-[#E8E8E8] rounded-2xl p-6"
+          data-v0-t="card"
+        >
+          <div
+            class="grid grid-cols-2 gap-1 max-h-[700px] items-center justify-center p-10 overflow-y-auto"
+          >
+            <viewUploadNote />
+          </div>
+        </div>
+        <div
+          v-if="showCheckNote && role.role === 'member'"
+          class="border text-card-foreground shadow-sm bg-[#E8E8E8] rounded-2xl p-6"
+          data-v0-t="card"
+        >
+          <div
+            class="grid grid-cols-4 gap-10 max-h-[700px] items-center justify-center p-5 overflow-y-auto"
+          >
+            <div
+              v-for="(files, index) in filesNotes"
+              :key="files.fileId"
+              class="flex items-center justify-center"
+            >
+              <ViewCheckNote :files="files" />
             </div>
           </div>
         </div>
